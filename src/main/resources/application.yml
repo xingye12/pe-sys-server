@@ -1,0 +1,14 @@
+server:
+  port: 8087
+
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://152.136.165.87:3306/pe?useUnicode=true&characterEncoding=utf8&useSSL=false&useSeverPreStmts=true&serverTimezone=Hongkong&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+
+mybatis:
+  type-aliases-package: com.example.mingguang.pojo
+  mapper-locations: classpath:/mapper/*.xml
