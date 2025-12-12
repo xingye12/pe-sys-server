@@ -31,3 +31,27 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Logs ###
+*.log
+spring-boot-devtools.properties
+
+### Temporary files ###
+sources.txt
+*.tmp
+*.bak
+*.swp
+*~
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Environment ###
+application-dev.properties
+application-local.properties
+
+### Static test files ###
+src/main/resources/static/*.html
+src/main/resources/static/*.css
+src/main/resources/static/*.js
