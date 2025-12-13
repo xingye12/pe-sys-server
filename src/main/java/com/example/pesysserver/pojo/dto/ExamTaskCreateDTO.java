@@ -10,6 +10,7 @@ public class ExamTaskCreateDTO {
     private String description;
     private List<Long> classIds;
     private List<String> examProjects;
-    private String examDate;
+    private String startTime;
+    private String endTime;
     private String location;
 }

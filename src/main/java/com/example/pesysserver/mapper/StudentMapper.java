@@ -9,17 +9,17 @@ import java.util.Map;
 @Mapper
 public interface StudentMapper {
 
-    @Select("SELECT s.*, c.classId, t.name as teacherName " +
+    @Select("SELECT s.*, c.classId, c.className, " +
+            "(SELECT t.name FROM teacher t WHERE t.classId = s.classId LIMIT 1) as teacherName " +
             "FROM student s " +
             "LEFT JOIN class c ON s.classId = c.classId " +
-            "LEFT JOIN teacher t ON c.teacherId = t.teacherId " +
             "ORDER BY s.studentId")
     List<Map<String, Object>> findAllWithDetails();
 
-    @Select("SELECT s.*, c.classId, t.name as teacherName " +
+    @Select("SELECT s.*, c.classId, c.className, " +
+            "(SELECT t.name FROM teacher t WHERE t.classId = s.classId LIMIT 1) as teacherName " +
             "FROM student s " +
             "LEFT JOIN class c ON s.classId = c.classId " +
-            "LEFT JOIN teacher t ON c.teacherId = t.teacherId " +
             "WHERE s.classId = #{classId} " +
             "ORDER BY s.studentId")
     List<Map<String, Object>> findByClassId(Integer classId);

@@ -25,22 +25,22 @@ public interface ClassMapper {
     ClassInfo findById(Integer classId);
 
     // 获取班级详细信息（包含学生数量）
-    @Select("SELECT c.*, t.name as teacherName, " +
+    @Select("SELECT c.*, " +
+            "(SELECT t.name FROM teacher t WHERE t.classId = c.classId LIMIT 1) as teacherName, " +
             "(SELECT COUNT(*) FROM student s WHERE s.classId = c.classId) as studentCount, " +
             "COALESCE(c.className, CONCAT(c.classId, '班')) as className, " +
             "COALESCE(c.grade, '未设置') as grade " +
             "FROM class c " +
-            "LEFT JOIN teacher t ON c.teacherId = t.teacherId " +
             "ORDER BY c.classId")
     List<Map<String, Object>> findAllWithDetails();
 
     // 获取单个班级的完整信息
-    @Select("SELECT c.*, t.name as teacherName, " +
+    @Select("SELECT c.*, " +
+            "(SELECT t.name FROM teacher t WHERE t.classId = c.classId LIMIT 1) as teacherName, " +
             "(SELECT COUNT(*) FROM student s WHERE s.classId = c.classId) as studentCount, " +
             "COALESCE(c.className, CONCAT(c.classId, '班')) as className, " +
             "COALESCE(c.grade, '未设置') as grade " +
             "FROM class c " +
-            "LEFT JOIN teacher t ON c.teacherId = t.teacherId " +
             "WHERE c.classId = #{classId}")
     Map<String, Object> findClassDetails(Integer classId);
 

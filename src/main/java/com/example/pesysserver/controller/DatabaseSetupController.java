@@ -52,10 +52,10 @@ public class DatabaseSetupController {
                     "(8, '周小华', '123456', 3)");
 
             // 插入考试任务数据
-            jdbcTemplate.execute("INSERT INTO exams (examId, type, description, classId, begin_time, end_time, status) VALUES " +
-                    "(1, '800米跑', '第一次体育测试 - 800米长跑', 1, '2025-01-15 09:00:00', '2025-01-15 10:00:00', 'COMPLETED'), " +
-                    "(2, '立定跳远', '第二次体育测试 - 立定跳远', 2, '2025-01-16 09:00:00', '2025-01-16 10:00:00', 'PENDING'), " +
-                    "(3, '仰卧起坐', '第三次体育测试 - 仰卧起坐', 3, '2025-01-17 09:00:00', '2025-01-17 10:00:00', 'IN_PROGRESS')");
+            jdbcTemplate.execute("INSERT INTO exams (examId, type, description, classId, begin_time, end_time, state, exam_name) VALUES " +
+                    "(1, '800米跑', '800米长跑项目测试', 1, '2025-01-15 09:00:00', '2025-01-15 10:00:00', '已结束', '第一次体能测试'), " +
+                    "(2, '立定跳远', '立定跳远项目测试', 2, '2025-01-16 09:00:00', '2025-01-16 10:00:00', '未开始', '第二次体能测试'), " +
+                    "(3, '仰卧起坐', '仰卧起坐项目测试', 3, '2025-01-17 09:00:00', '2025-01-17 10:00:00', '正在进行', '第三次体能测试')");
 
             // 插入视频数据
             jdbcTemplate.execute("INSERT INTO video (vidoeId, name) VALUES " +

@@ -91,11 +91,18 @@ public class AdminServiceImpl implements AdminService {
     public List<ExamTask> getAllExamTasks() {
         try {
             List<ExamTask> examTasks = examTaskMapper.findAll();
+            log.info("获取到 {} 个考试任务", examTasks.size());
+
             examTasks.forEach(task -> {
+                log.info("任务详情 - ID: {}, 类型: {}, 描述: {}, 状态: {}",
+                    task.getExamId(), task.getType(), task.getDescription(), task.getState());
                 // 扩展字段
                 task.setTaskName(task.getType());
                 task.setExamDate(task.getBegin_time());
-                task.setLocation("学校操场");
+                // 如果没有地点，设置默认地点
+                if (task.getLocation() == null || task.getLocation().isEmpty()) {
+                    task.setLocation("学校操场");
+                }
             });
             return examTasks;
         } catch (Exception e) {
@@ -127,17 +134,47 @@ public class AdminServiceImpl implements AdminService {
         try {
             ExamTask examTask = new ExamTask();
             examTask.setTaskName(dto.getTaskName());
+            // examName字段存储任务名称
+            examTask.setExamName(dto.getTaskName());
+            // description字段存储任务说明
             examTask.setDescription(dto.getDescription());
-            examTask.setType(dto.getTaskName());
-            examTask.setClassIds(dto.getClassIds().stream().map(Long::intValue).collect(Collectors.toList()));
+            // type字段存储主要考试项目，如果有多个项目，取第一个；如果没有项目，使用默认值
+            if (dto.getExamProjects() != null && !dto.getExamProjects().isEmpty()) {
+                examTask.setType(dto.getExamProjects().get(0));
+            } else {
+                examTask.setType("体能测试");
+            }
             examTask.setExamProjects(dto.getExamProjects());
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            examTask.setBegin_time(LocalDate.parse(dto.getExamDate(), formatter).atStartOfDay());
-            examTask.setEnd_time(LocalDate.parse(dto.getExamDate(), formatter).plusDays(1).atStartOfDay());
-            examTask.setStatus("PENDING");
+            // 获取下一个examId
+            Integer maxExamId = null;
+            try {
+                maxExamId = jdbcTemplate.queryForObject("SELECT MAX(examId) FROM exams", Integer.class);
+            } catch (Exception e) {
+                log.warn("查询examId失败，可能exams表不存在: {}", e.getMessage());
+                maxExamId = null;
+            }
+            Integer newExamId = (maxExamId == null ? 0 : maxExamId) + 1;
+            examTask.setExamId(newExamId);
+            log.info("生成的examId: {}", newExamId);
 
-            examTaskMapper.insert(examTask);
+            // 使用第一个班级ID（当前数据库结构只支持单个classId）
+            if (dto.getClassIds() != null && !dto.getClassIds().isEmpty()) {
+                examTask.setClassId(dto.getClassIds().get(0).intValue());
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            // 直接使用前端传递的时间段
+            examTask.setBegin_time(LocalDateTime.parse(dto.getStartTime(), formatter));
+            examTask.setEnd_time(LocalDateTime.parse(dto.getEndTime(), formatter));
+            examTask.setState("未开始");
+
+            log.info("即将插入考试任务: examId={}, type={}, description={}, classId={}",
+                examTask.getExamId(), examTask.getType(), examTask.getDescription(), examTask.getClassId());
+
+            int insertResult = examTaskMapper.insert(examTask);
+            log.info("数据库插入结果: {}", insertResult);
+            log.info("创建考试任务成功，examId: {}, taskName: {}", newExamId, dto.getTaskName());
             return examTask;
         } catch (Exception e) {
             log.error("创建考试任务失败", e);
@@ -168,7 +205,7 @@ public class AdminServiceImpl implements AdminService {
                 report.setExamType(examTask.getType());
                 report.setExamDescription(examTask.getDescription());
                 report.setExamDate(examTask.getBegin_time().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                report.setStatus(examTask.getStatus());
+                report.setStatus(examTask.getState());
 
                 // 模拟统计数据
                 report.setTotalStudents(45);
@@ -435,14 +472,22 @@ public class AdminServiceImpl implements AdminService {
             String className = (String) classData.get("className");
             String grade = (String) classData.get("grade");
             Integer teacherId = (Integer) classData.get("teacherId");
-            if (teacherId == null) teacherId = 1; // 默认老师
 
             // 使用参数化查询防止SQL注入
             jdbcTemplate.update(
-                "INSERT INTO class (classId, className, grade, teacherId, examId) VALUES (?, ?, ?, ?, ?)",
-                newClassId, className, grade, teacherId, 1
+                "INSERT INTO class (classId, className, grade) VALUES (?, ?, ?)",
+                newClassId, className, grade
             );
-            log.info("创建班级成功，classId: {}, className: {}, grade: {}", newClassId, className, grade);
+
+            // 如果选择了班主任，更新teacher表的classId
+            if (teacherId != null) {
+                jdbcTemplate.update(
+                    "UPDATE teacher SET classId = ? WHERE teacherId = ?",
+                    newClassId, teacherId
+                );
+            }
+
+            log.info("创建班级成功，classId: {}, className: {}, grade: {}, teacherId: {}", newClassId, className, grade, teacherId);
         } catch (Exception e) {
             log.error("创建班级失败", e);
             throw new RuntimeException("创建班级失败: " + e.getMessage());
@@ -463,14 +508,6 @@ public class AdminServiceImpl implements AdminService {
             if (classData.containsKey("grade")) {
                 sql.append("grade = ?, ");
                 params.add(classData.get("grade"));
-            }
-            if (classData.containsKey("teacherId")) {
-                sql.append("teacherId = ?, ");
-                params.add(classData.get("teacherId"));
-            }
-            if (classData.containsKey("examId")) {
-                sql.append("examId = ?, ");
-                params.add(classData.get("examId"));
             }
 
             // 移除最后的逗号

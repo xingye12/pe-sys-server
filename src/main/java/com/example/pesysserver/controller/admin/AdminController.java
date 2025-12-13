@@ -10,6 +10,7 @@ import com.example.pesysserver.pojo.entity.StudentScore;
 import com.example.pesysserver.pojo.entity.VideoFile;
 import com.example.pesysserver.pojo.vo.ClassDetailVO;
 import com.example.pesysserver.service.AdminService;
+import com.example.pesysserver.service.ExamStatusService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,9 @@ public class AdminController {
 
     @Autowired
     private AdminService adminService;
+
+    @Autowired
+    private ExamStatusService examStatusService;
 
     // ============ 班级管理 ============
 
@@ -239,7 +243,17 @@ public class AdminController {
     @PostMapping("/tasks")
     public Result<ExamTask> createExamTask(@RequestBody ExamTaskCreateDTO examTaskCreateDTO) {
         try {
+            log.info("接收到任务发布请求: {}", examTaskCreateDTO);
+            log.info("任务详情 - 名称: {}, 描述: {}, 班级IDs: {}, 考试项目: {}, 开始时间: {}, 结束时间: {}",
+                examTaskCreateDTO.getTaskName(),
+                examTaskCreateDTO.getDescription(),
+                examTaskCreateDTO.getClassIds(),
+                examTaskCreateDTO.getExamProjects(),
+                examTaskCreateDTO.getStartTime(),
+                examTaskCreateDTO.getEndTime());
+
             ExamTask examTask = adminService.createExamTask(examTaskCreateDTO, "admin");
+            log.info("任务创建成功: {}", examTask);
             return Result.success(examTask);
         } catch (Exception e) {
             log.error("创建考试任务失败", e);
@@ -255,6 +269,39 @@ public class AdminController {
         } catch (Exception e) {
             log.error("删除考试任务失败", e);
             return Result.error("删除考试任务失败");
+        }
+    }
+
+    @PutMapping("/tasks/{taskId}/status")
+    public Result<String> updateExamTaskStatus(
+            @PathVariable Integer taskId,
+            @RequestBody Map<String, String> statusData) {
+        try {
+            String newStatus = statusData.get("status");
+            if (newStatus == null || newStatus.trim().isEmpty()) {
+                return Result.error("状态不能为空");
+            }
+
+            boolean success = examStatusService.updateExamStatus(taskId, newStatus);
+            if (success) {
+                return Result.success("状态更新成功");
+            } else {
+                return Result.error("状态更新失败");
+            }
+        } catch (Exception e) {
+            log.error("更新考试任务状态失败", e);
+            return Result.error("更新考试任务状态失败: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/tasks/update-all-statuses")
+    public Result<String> updateAllExamStatuses() {
+        try {
+            examStatusService.updateAllExamStatuses();
+            return Result.success("考试状态检查更新完成");
+        } catch (Exception e) {
+            log.error("批量更新考试状态失败", e);
+            return Result.error("批量更新考试状态失败: " + e.getMessage());
         }
     }
 
