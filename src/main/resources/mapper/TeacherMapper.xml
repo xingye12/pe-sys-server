@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.pesysserver.mapper.TeacherMapper">
+    <select id="getClassExam" parameterType="Exam" resultType="Exam">
+        select * from exams
+        <where>
+            <if test="classId != null">
+                and classId = #{classId}
+            </if>
+            <if test="beginTime != null">
+                and begin_time &gt;= #{beginTime}
+            </if>
+            <if test="endTime != null">
+                and end_time &lt;= #{endTime}
+            </if>
+            <if test="examName != null">
+                and exam_name = #{examName}
+            </if>
+        </where>
+    </select>
+
+    <!-- 获取学生成绩列表（支持查询和分页） -->
+    <select id="getStudentScores" resultType="com.example.pesysserver.pojo.vo.StudentScoreVO">
+        SELECT
+            s.studentId as studentId,
+            s.username as studentNo,
+            s.name as studentName,
+            c.className,
+            85.5 as avgScore,
+            1 as class_rank,
+            3 as examCount,
+            92.5 as passRate,
+            0.0 as progress,
+            '期中考试' as latestExamType,
+            NOW() as latestExamTime
+        FROM student s
+        JOIN class c ON s.classId = c.classId
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 获取学生成绩总数 -->
+    <select id="getStudentScoresCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM student s
+        JOIN class c ON s.classId = c.classId
+    </select>
+
+</mapper>

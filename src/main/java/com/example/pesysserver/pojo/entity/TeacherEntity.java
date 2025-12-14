@@ -3,9 +3,9 @@ package com.example.pesysserver.pojo.entity;
 import lombok.Data;
 
 @Data
-//适配修改前的数据库，现在可能不好用，考虑用StudentEntity
-public class Student {
-    private int studentId;
+public class TeacherEntity {
+    private int teacherId;
+    private String username;
     private String name;
     private String password;
     private int classId;

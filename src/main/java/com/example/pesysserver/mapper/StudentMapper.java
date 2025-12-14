@@ -1,6 +1,7 @@
 package com.example.pesysserver.mapper;
 
 import com.example.pesysserver.pojo.entity.Student;
+import com.example.pesysserver.pojo.entity.StudentEntity;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -53,4 +54,7 @@ public interface StudentMapper {
             "</foreach>" +
             "</script>")
     int batchInsert(@Param("students") List<Student> students);
+    @Select("SELECT * FROM student WHERE username = #{username} AND password = #{password}")
+    StudentEntity verifyStudentCredentials(@Param("username") String username, @Param("password") String password);
+
 }

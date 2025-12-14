@@ -12,3 +12,5 @@ spring:
 mybatis:
   type-aliases-package: com.example.pesysserver.pojo
   mapper-locations: classpath:/mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
