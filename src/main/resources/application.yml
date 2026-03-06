@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     username: root
-    password: 2337759353Jian!
+    password: jinan12138
     url: jdbc:mysql://114.55.137.125:3306/pesys?useUnicode=true&characterEncoding=utf8&useSSL=false&useServerPrepStmts=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource

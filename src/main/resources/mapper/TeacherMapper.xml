@@ -21,20 +21,65 @@
 
     <!-- 获取学生成绩列表（支持查询和分页） -->
     <select id="getStudentScores" resultType="com.example.pesysserver.pojo.vo.StudentScoreVO">
+        SELECT * FROM (
         SELECT
-            s.studentId as studentId,
-            s.username as studentNo,
-            s.name as studentName,
-            c.className,
-            85.5 as avgScore,
-            1 as class_rank,
-            3 as examCount,
-            92.5 as passRate,
-            0.0 as progress,
-            '期中考试' as latestExamType,
-            NOW() as latestExamTime
+        s.studentId as studentId,
+        s.username as studentNo,
+        s.name as studentName,
+        c.className,
+        ROUND(COALESCE(AVG(ss.score), 0), 2) as avgScore,
+        ROW_NUMBER() OVER (ORDER BY COALESCE(AVG(ss.score), 0) DESC) as temp_rank,
+        COUNT(DISTINCT ss.exam_id) as examCount,
+        ROUND(
+        COALESCE(
+        SUM(CASE WHEN ss.score >= 60 THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(ss.score), 0),
+        0
+        ), 2
+        ) as passRate,
+        0.0 as progress,
+        '期中考试' as latestExamType,
+        MAX(ss.exam_time) as latestExamTime
         FROM student s
         JOIN class c ON s.classId = c.classId
+        LEFT JOIN student_scores ss ON s.studentId = ss.student_id
+        WHERE 1=1
+        <if test="dto.classId != null">
+            AND s.classId = #{dto.classId}
+        </if>
+        <if test="dto.studentName != null and dto.studentName != ''">
+            AND s.name LIKE CONCAT('%', #{dto.studentName}, '%')
+        </if>
+        GROUP BY
+        s.studentId,
+        s.username,
+        s.name,
+        c.className,
+        c.classId
+        HAVING 1=1
+        <if test="dto.scoreRange != null and dto.scoreRange != ''">
+            <choose>
+                <when test="dto.scoreRange == 'excellent'">
+                    AND COALESCE(AVG(ss.score), 0) >= 85
+                </when>
+                <!-- 其他条件同上 -->
+            </choose>
+        </if>
+        ) as t
+        ORDER BY
+        <choose>
+            <when test="dto.sortBy == 'score_asc'">
+                avgScore ASC
+            </when>
+            <when test="dto.sortBy == 'name'">
+                studentName ASC
+            </when>
+            <when test="dto.sortBy == 'student_no'">
+                studentNo ASC
+            </when>
+            <otherwise>
+                avgScore DESC
+            </otherwise>
+        </choose>
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
